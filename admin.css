@@ -1,0 +1,203 @@
+/* General page styling */
+body {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    background-color: #012456;
+    color: #f8e5b1; /* Egg white color */
+  }
+  #current-table{
+    color: black;
+  }
+  /* Navigation bar */
+  .navbar {
+    background-color: #012456;
+  }
+  
+  .navbar-brand {
+    font-weight: 600;
+    color: #f8e5b1; /* Egg white color */
+  }
+  .bg-blue-500 , body{
+    background-color: #012456;
+  }
+  .nav-link {
+    font-weight: 500;
+    color: #f8e5b1; /* Egg white color */
+  }
+  
+  .nav-link:hover {
+    color: #93c5fd;
+  }
+  .form-group input, .form-group select, .form-group button, .form-group textarea{
+    display: block;
+    width: 100%;
+    background-color: #1c5695;
+  }
+  .container2 {
+    background: #0161e8;
+  }
+  .tableSection{
+    background-color: #0a3a6e;
+  }
+ 
+  /* Container */
+  .container_child {
+    background-color: #0a3a6e;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Buttons */
+  button {
+    border-radius: 4px;
+    transition: background-color 150ms ease-in-out, color 150ms ease-in-out, box-shadow 150ms ease-in-out;
+  }
+  
+  button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  .btn-primary {
+    background-color: #012456;
+    color: #f8e5b1; /* Egg white color */
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+  
+  .btn-secondary {
+    background-color: #6b7280;
+    color: #f8e5b1; /* Egg white color */
+    border: none;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #4b5563;
+  }
+  
+  .btn-danger {
+    background-color: #ef4444;
+    color: #f8e5b1; /* Egg white color */
+    border: none;
+  }
+  
+  .btn-danger:hover {
+    background-color: #dc2626;
+  }
+  
+  /* Form elements */
+  input,
+  select,
+  textarea {
+    transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
+  }
+  
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #012456;
+    box-shadow: 0 0 0 1px #012456;
+  }
+  
+  .form-control {
+    background-color: #0a3a6e;
+    border: 1px solid #1a4c86;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    color: #f8e5b1; /* Egg white color */
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  label {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #012456;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  th, td {
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid #1a4c86;
+    color: #f8e5b1; /* Egg white color */
+}
+
+th {
+font-weight: 600;
+background-color: #0161e8;
+}
+
+/* Left panel */
+.left-panel {
+margin-bottom: 1.5rem;
+}
+
+.left-panel .list-group-item {
+background-color: #0a3a6e;
+color: #f8e5b1; /* Egg white color */
+cursor: pointer;
+}
+
+.left-panel .list-group-item:hover {
+background-color: #012456;
+color: #93c5fd;
+}
+
+.left-panel .list-group-item.active {
+background-color: #012456;
+color: #ffffff;
+}
+
+/* Custom scrollbar for left panel */
+.left-panel::-webkit-scrollbar {
+width: 8px;
+}
+
+.left-panel::-webkit-scrollbar-track {
+background-color: #012456;
+border-radius: 4px;
+}
+
+.left-panel::-webkit-scrollbar-thumb {
+background-color: #1a4c86;
+border-radius: 4px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover {
+background-color: #0a3a6e;
+}
+
+/* Responsive design */
+@media (max-width: 991.98px) {
+.left-panel {
+margin-bottom: 1rem;
+}
+}
+  
+
+.pagination {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+  
+  .pagination .page-item{
+    flex: 1;
+    text-align: center;
+  }

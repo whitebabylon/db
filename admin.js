@@ -1,0 +1,723 @@
+$(document).ready(function() {
+    $('#column-list').DataTable({
+         // Specify the custom HTML structure for the table
+      "language": {
+        "sProcessing": "Processing...",
+        "sLengthMenu": "Show _MENU_ entries",
+        "sZeroRecords": "No matching records found",
+        "sEmptyTable": "No data available in table",
+        "sInfo": "Showing _START_ to _END_ of _TOTAL_ entries",
+        "sInfoEmpty": "Showing 0 to 0 of 0 entries",
+        "sInfoFiltered": "(filtered from _MAX_ total entries)",
+        "sInfoPostFix": "",
+        "sSearch": "Search:",
+        "sUrl": "",
+        "oPaginate": {
+            "sFirst": "First",
+            "sPrevious": "Previous",
+            "sNext": "Next",
+            "sLast": "Last"
+        }
+      }
+    });
+
+    loadTables();
+    setupTablesForEditing();
+
+
+  });
+
+  // The JSON data structure
+  let myTables = [];
+
+  function createTable() {
+    const tableName = document.getElementById("table-name").value;
+
+    // Check if the table name is already in use
+    if (myTables.find(table => table.tableName === tableName)) {
+      showMessage("Table name is already in use");
+      return;
+    }
+
+    // Create a new table object
+    const newTable = {
+      "tableName": tableName,
+      "columns": [],
+      "rows": []
+    };
+
+    // Add the new table to the data structure
+    myTables.push(newTable);
+
+    // Update the table select dropdowns
+    const tableSelects = document.querySelectorAll("#column-table, #current-table");
+    for (let i = 0; i < tableSelects.length; i++) {
+      const newOption = document.createElement("option");
+      newOption.text = tableName;
+      tableSelects[i].add(newOption);
+   
+    }
+}
+
+function populateColumns() {
+const tableName = document.getElementById("current-table").value;
+const table = myTables.find(table => table.tableName === tableName);
+if (!table) {
+// Table not found
+showMessage("Table not found.");
+return;
+}
+// Initialize the DataTable
+const tableElement = $('#column-list').DataTable({
+destroy: true,
+data: table.columns,
+columns: [
+  { data: 'name' },
+  { data: 'type' },
+  { 
+    data: null,
+    render: function (data, type, row) {
+      return '<button onclick="deleteRow(\'' + tableName + '\', \'' + data.name + '\')">Delete</button>';
+    }
+  }
+]
+});
+
+// Clear the search field and ordering
+tableElement.search('').columns().search('').draw();
+console.log(JSON.stringify(myTables));
+}
+
+function addColumn() {
+const tableName = document.getElementById("column-table").value;
+const columnName = document.getElementById("column-name").value;
+const columnType = document.getElementById("column-type").value;
+
+// Find the table in the data structure
+const table = myTables.find(table => table.tableName === tableName);
+
+// Check if the column name is already in use
+if (table.columns.find(column => column.name === columnName)) {
+showMessage("Column name is already in use");
+return;
+}
+
+// Create a new column object
+const newColumn = {
+"name": columnName,
+"type": columnType
+};
+
+// Add the new column to the table
+table.columns.push(newColumn);
+
+// Update the column list
+populateColumns();
+
+// Clear the form
+document.getElementById("column-name").value = "";
+document.getElementById("column-type").value = "number";
+}
+
+function deleteRow(tableName, columnName) {
+// Find the table in the data structure
+const table = myTables.find(table => table.tableName === tableName);
+
+// Find the column in the table
+const column = table.columns.find(column => column.name === columnName);
+
+// Remove the column from the table
+table.columns.splice(table.columns.indexOf(column), 1);
+
+// Update the column list
+populateColumns();
+}
+/*
+// Populate the table select dropdowns
+const tableSelects2 = document.querySelectorAll("#column-table, #current-table");
+myTables.forEach(table => {
+const newOption = document.createElement("option");
+newOption.text = table.tableName;
+tableSelects2.forEach(select => select.add(newOption));
+});
+*/
+
+
+
+
+
+function importJson() {
+    const jsonString = document.getElementById("json-input").value;
+    const json = JSON.parse(jsonString);
+
+    // Check if the table already exists
+    const existingTableIndex = myTables.findIndex(table => table.tableName === json[0].tableName);
+    if (existingTableIndex > -1) {
+      const overwrite = confirm("Table already exists. Do you want to overwrite it?");
+      if (!overwrite) {
+        return;
+      }
+      // Replace the existing table with the imported one
+      myTables[existingTableIndex] = json[0];
+
+      // Check if the user is currently looking at the updated table
+      const currentTable = document.getElementById("current-table").value;
+      if (currentTable === json[0].tableName) {
+        // Refresh the data tables view
+        populateColumns();
+      }
+    } else {
+      // Add the new table to the myTables array
+      myTables.push(json[0]);
+
+      // Update the table select dropdowns
+      const tableSelects = document.querySelectorAll("#column-table, #current-table");
+      const newOption = document.createElement("option");
+      newOption.text = json[0].tableName;
+      tableSelects.forEach(select => select.add(newOption));
+    }
+
+    saveTables();
+  }
+
+
+   // Save myTables array to localStorage
+   function saveTables() {
+    localStorage.setItem("myTables", JSON.stringify(myTables));
+    showMessage("Tables saved to localStorage");
+    loadTables() 
+
+  }
+
+  // Load myTables array from localStorage
+   // Load myTables array from localStorage
+   function loadTables() {
+    const tables = JSON.parse(localStorage.getItem("myTables"));
+    if (tables) {
+      myTables.splice(0, myTables.length, ...tables);
+      showMessage("Tables loaded from localStorage");
+      // Populate table select dropdowns with all available table names
+      populateTablesDropdown();
+    } else {
+      showMessage("No tables found in localStorage");
+    }
+  }
+
+   // Populate table select dropdowns with all available table names
+   function populateTablesDropdown() {
+    const tableSelects = document.querySelectorAll("#column-table, #current-table");
+
+    // Update the table select dropdowns
+    for (let i = 0; i < tableSelects.length; i++) {
+        tableSelects[i].innerHTML = "";
+        newOption5 = document.createElement("option");
+        newOption5.text = "Select a table";;
+        tableSelects[i].add(newOption5);
+        myTables.forEach(table => {
+            newOption5 = document.createElement("option");
+            newOption5.text = table.tableName;
+            tableSelects[i].add(newOption5);
+        });
+    
+    }
+
+    
+  }
+
+
+
+
+    // Delete myTables array from localStorage
+    function deleteTables() {
+        const confirmDelete = confirm("Are you sure you want to delete all tables from localStorage?");
+        if (confirmDelete) {
+          localStorage.removeItem("myTables");
+          showMessage("Tables deleted from localStorage");
+          // Refresh the page to reflect the deleted tables
+          location.reload();
+        }
+      }
+
+        // Show the selected container and hide the others
+    function showContainer(containerId) {
+        const containers = document.querySelectorAll('.container_child');
+        containers.forEach(container => {
+          if (container.id === containerId) {
+            container.style.display = 'block';
+          } else {
+            container.style.display = 'none';
+          }
+        });
+      }
+
+
+function showMessage(message) {
+    const showMessageMessages = document.getElementsByClassName("alertMessages")[0].innerHTML = message ;
+
+}
+
+/*
+      
+    // Select all elements with a background color that are at least two levels deep within the <body> tag
+    const coloredElements = Array.from(document.querySelectorAll('*')).filter(element => {
+        const style = window.getComputedStyle(element);
+        return style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent' && element.parentNode.parentNode.tagName === 'BODY';
+    });
+    coloredElements.forEach(element => {
+        let originalOpacity = 1;
+        if (element.tagName === 'A' && window.getComputedStyle(element, ':hover').backgroundColor !== 'rgba(0, 0, 0, 0)' && window.getComputedStyle(element, ':hover').backgroundColor !== 'transparent') {
+        originalOpacity = window.getComputedStyle(element, ':hover').opacity;
+        } else {
+        originalOpacity = window.getComputedStyle(element).opacity;
+        }
+        element.addEventListener('mouseover', () => {
+        element.style.opacity = originalOpacity - 0.1;
+        });
+        element.addEventListener('mouseout', () => {
+        element.style.opacity = originalOpacity;
+        });
+    });
+
+*/
+/*
+// Define an array of colors, with the first color being the base color
+const colors = ['#012456', '#173d6d', '#225485', '#2d6a9e', '#3872b7', '#428ad0', '#4c9ee9', '#56b3ff', '#5ec7ff', '#66dbff'];
+
+// Get all the elements on the page
+const elements = document.querySelectorAll('*');
+
+// Loop through each element and set its background color based on its parent distance
+for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    const distance = getParentDistance(element);
+    const colorIndex = Math.min(distance, colors.length - 1);
+    const color = colors[colorIndex];
+    const gradientStops = getGradientStops(distance, colors.length - 1);
+    //const gradient = `linear-gradient(to right, ${color} 0%,  ${colors[colorIndex + 1]} 40%, ${colors[colorIndex + 1]} 60%, ${colors[colorIndex]} 100%)`;
+    //const gradient = `radial-gradient(${colors[colorIndex + 1]} 0%, ${color} 40%, ${color} 60%, ${colors[colorIndex + 1]} 100%)`;
+
+    const gradient = `linear-gradient(to bottom, ${color} 0%, ${colors[colorIndex + 1]} 40%, ${colors[colorIndex + 1]} 60%, ${colors[colorIndex]} 100%)`;
+
+    //const gradient = `radial-gradient(circle at center, ${color} 0%, ${colors[colorIndex + 1]} 40%, ${colors[colorIndex + 1]} 60%, ${color} 100%)`;
+    const opacity = `linear-gradient(to bottom, rgba(1, 36, 86, 1) 0%, rgba(1, 36, 86, 0) 20%, rgba(1, 36, 86, 0) 80%, rgba(1, 36, 86, 1) 100%)`;
+
+    //element.style.mixBlendMode = "darken";
+    //element.style.backgroundBlendMode = "darken";
+    element.style.backgroundImage = `${gradient}, ${gradient}`;
+
+    //element.style.background = gradient;
+}
+*/
+/*
+// Define an array of background blend mode values
+const blendModes = [
+    "normal",
+    "multiply",
+    "screen",
+    "overlay",
+    "darken",
+    "lighten",
+    "color-dodge",
+    "color-burn",
+    "hard-light",
+    "soft-light",
+    "difference",
+    "exclusion",
+    "hue",
+    "saturation",
+    "color",
+    "luminosity"
+  ];
+  
+
+  // Set an initial blend mode
+  let blendIndex = 0;
+
+  
+  // Add an event listener to the document for the "keydown" event
+  document.addEventListener("keydown", function(event) {
+    // Check if the left arrow key was pressed
+    if (event.keyCode === 37) {
+      // Increment the blend mode index
+      blendIndex++;
+      if (blendIndex >= blendModes.length) {
+        blendIndex = 0;
+      }
+     
+      const colors = ['#E63946', '#F1FAEE', '#A8DADC', '#457B9D', '#1D3557', '#FCA311', '#F7FFF7', '#ADE8F4', '#6D6875', '#FFD6BA', '#FFE5D9', '#EDAE49', '#E5FCC2', '#9DE0AD', '#5D5C61', '#CA7B80'];
+      let colorIndex = 0;
+    
+      function colorDiv(element, level) {
+        const color = colors[colorIndex % colors.length];
+        colorIndex++;
+    
+        element.style.backgroundColor = color;
+        element.style.mixBlendMode = blendModes[blendIndex];
+        element.style.mixedBlendMode = blendModes[blendIndex+1];
+        //backgroundBlendMode 
+        element.style.border = "1px solid white";
+        element.style.color = "black";
+        // If the element has child nodes, apply colors to them recursively
+        if (element.childNodes.length > 0) {
+          for (let i = 0; i < element.childNodes.length; i++) {
+            const child = element.childNodes[i];
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              colorDiv(child, level + 1);
+            }
+          }
+        }
+      }
+    
+      // Start at the body element and apply colors to each DIV
+      const body = document.getElementsByTagName('body')[0];
+  
+      colorDiv(body, 0);
+    }
+  });
+*/
+
+  function colorDivs() {
+    const colors = ['#E63946', '#F1FAEE', '#A8DADC', '#457B9D', '#1D3557', '#FCA311', '#F7FFF7', '#ADE8F4', '#6D6875', '#FFD6BA', '#FFE5D9', '#EDAE49', '#E5FCC2', '#9DE0AD', '#5D5C61', '#CA7B80'];
+    let colorIndex = 0;
+  
+    function colorDiv(element, level) {
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
+  
+      element.style.backgroundColor = color;
+      element.style.mixBlendMode = 'luminosity';
+      //backgroundBlendMode 
+      element.style.border = "1px solid white";
+      element.style.color = "white";
+      // If the element has child nodes, apply colors to them recursively
+      if (element.childNodes.length > 0) {
+        for (let i = 0; i < element.childNodes.length; i++) {
+          const child = element.childNodes[i];
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            colorDiv(child, level + 1);
+          }
+        }
+      }
+    }
+  
+    // Start at the body element and apply colors to each DIV
+    const body = document.getElementsByTagName('body')[0];
+
+    colorDiv(body, 0);
+  }
+
+
+function setDivBackgroundColors() {
+    const colors = generateColors("#012456", 10, 10);
+    colors = colors.reverse();
+    const divs = document.querySelectorAll("body div");
+  
+    divs.forEach((div) => {
+        console.log("New div");
+      // Get the distance of the div from the body element
+      const distance = getDivDistanceFromBody(div);
+  
+      // Set the div background color
+      const colorIndex = Math.min(distance, colors.length - 1);
+      const color = colors[colorIndex];
+      div.style.background = color;
+      div.style.border = "1px solid white";
+      div.style.color = "white";
+      // Set the mix-blend-mode property
+      if (distance > 0) {
+        console.log("New div distance");
+        const parentColor = colors[colorIndex - 1];
+        div.style.mixBlendMode = "overlay";
+        div.style.background = `linear-gradient(to bottom, ${parentColor} 0%, ${color} 100%)`;
+        div.style.background = blendColors(colors[0], "#ffffff", index / totalDivs);
+        div.style.color = "white";
+        div.style.border = "1px solid white";
+      }
+    });
+  }
+/*
+
+  function generateColors(numColors) {
+    const colors = [];
+  
+    for (let i = 0; i < numColors; i++) {
+      const hue = (360 / numColors) * i;
+      const saturation = 100;
+      const lightness = 50;
+      const color = `hsl(${hue},${saturation}%,${lightness}%)`;
+      colors.push(color);
+    }
+  
+    return colors;
+  }
+
+  function getDivDistanceFromBody(element) {
+    let distance = 0;
+    let parent = element.parentNode;
+    
+    while (parent.tagName !== 'BODY') {
+      if (parent.tagName === 'DIV') {
+        distance++;
+      }
+      parent = parent.parentNode;
+    }
+    
+    return distance;
+  }
+
+  */
+
+  function setDivBackgroundColors() {
+    console.log("Grabbing documents");
+    const divs = document.querySelectorAll("div");
+  
+    const maxDistance = getDivDistanceFromBody(divs[0]);
+    console.log("maxDistance -> " + maxDistance);
+    let bodyColor = "#012456";
+    let farthestColor = "#FFFFFF";
+    let gradientStep = 1 / maxDistance;
+  
+    divs.forEach((div) => {
+        console.log("div");
+      const distance = getDivDistanceFromBody(div);
+      console.log("distance -> " + distance);
+      console.log("gradientStep -> " + gradientStep);
+      const opacity = distance * gradientStep;
+      console.log("farthestColor -> " + farthestColor);
+      console.log("bodyColor -> " + bodyColor);
+      console.log("opacity -> " + opacity);
+      const color = blendColors(farthestColor, bodyColor, opacity);
+  
+      div.style.backgroundColor = color;
+      console.log("color -> " + color);
+    });
+  }
+
+  function getDivDistanceFromBody(element) {
+    console.log("getDivDistanceFromBody");
+    let distance = 0;
+    let parent = element.parentNode;
+    
+    while (parent.tagName !== 'BODY') {
+        console.log("parent ->" + parent.tagName);
+      if (parent.tagName === 'DIV') {
+        distance++;
+      }
+      if (parent.tagName === 'NAV') {
+        distance++;
+      }
+      parent = parent.parentNode;
+    }
+    
+    return distance;
+  }
+
+
+  window.addEventListener('load', function() {
+  //  setDivBackgroundColors();
+  //colorDivs() ;
+  //setDivBackgroundColors();
+  //setBodyColor();
+  
+  // Call the function with the BODY element to start
+  //const bodyElement = document.querySelector('body');
+  //setDivBackgroundColors(bodyElement, 0);
+
+  });
+
+
+  function setDivBackgroundColors(element, depth) {
+    const baseColor = '#012456';
+    color =  blendColors(baseColor, '#ffffff', depth * 0.05);;
+    if (element.children.length === 0 && depth > 0) {
+        depth -= 1;
+        color = blendColors(baseColor, '#ffffff', depth * 0.05);
+        depth += 1; 
+    } else {
+        color = blendColors(baseColor, '#ffffff', depth * 0.05);
+    }
+
+    element.style.backgroundColor = color;
+    
+    const children = element.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      // || child.tagName.toLowerCase() === 'a'
+      // || child.tagName.toLowerCase() === 'li'
+      if (child.tagName.toLowerCase() === 'div' || child.tagName.toLowerCase() === 'nav' || child.tagName.toLowerCase() === 'ul' ) {
+        setDivBackgroundColors(child, depth + 1);
+      }
+    }
+  }
+
+  function blendColors(c1, c2, ratio) {
+    ratio = Math.max(0, Math.min(1, ratio));
+    const r = Math.round(parseInt(c1.substring(1, 3), 16) * (1 - ratio) + parseInt(c2.substring(1, 3), 16) * ratio);
+    const g = Math.round(parseInt(c1.substring(3, 5), 16) * (1 - ratio) + parseInt(c2.substring(3, 5), 16) * ratio);
+    const b = Math.round(parseInt(c1.substring(5, 7), 16) * (1 - ratio) + parseInt(c2.substring(5, 7), 16) * ratio);
+    
+    if (r < 0) r = 0;
+    if (g < 0) g = 0;
+    if (b < 0) b = 0;
+    
+    return "#" + (r.toString(16).length === 1 ? "0" + r.toString(16) : r.toString(16)) +
+                 (g.toString(16).length === 1 ? "0" + g.toString(16) : g.toString(16)) +
+                 (b.toString(16).length === 1 ? "0" + b.toString(16) : b.toString(16));
+  }
+  
+/*
+// Helper function to get the parent distance
+function getParentDistance(element) {
+  let distance = 0;
+  let parent = element.parentNode;
+  while (parent !== null && parent.tagName !== 'BODY') {
+    distance++;
+    parent = parent.parentNode;
+  }
+  return distance;
+}
+
+// Helper function to get the gradient stops based on the distance
+function getGradientStops(distance, maxDistance) {
+  const startStop = 40 - distance * 4;
+  const endStop = 60 + distance * 4;
+  return [startStop, endStop];
+}
+*/
+
+
+  // Load database from local storage
+  //let myTables = JSON.parse(localStorage.getItem("myTables"));
+  function setupTablesForEditing(){
+    // Select dropdown for table selection
+    const tableDropdown = document.getElementById("table-select");
+      
+    // Populate table dropdown options
+    myTables.forEach((table) => {
+      console.log("love to add option to table");
+      const option = document.createElement("option");
+      option.text = table.tableName;
+      tableDropdown.add(option);
+    });
+
+    // Listen for table selection change
+    tableDropdown.addEventListener("change", (event) => {
+      const selectedTableName = event.target.value;
+      
+      // Get selected table from myTables array
+      const selectedTable = myTables.find((table) => table.tableName === selectedTableName);
+      //table-records
+      //table-new-records
+
+      // Select table and column headers elements
+      const tableElement = document.getElementById("table-records");
+      const columnHeadersElement = document.getElementById("column-headers");
+      const rowHeadersElement = document.getElementById("column-rows");
+
+      // Clear previous table data and column headers
+      //tableElement.innerHTML = "";
+      rowHeadersElement.innerHTML = "";
+      columnHeadersElement.innerHTML = "" ;
+      // Populate table with rows
+      selectedTable.rows.forEach((row) => {
+        const rowElement = document.createElement("tr");
+        selectedTable.columns.forEach((column) => {
+          const cellElement = document.createElement("td");
+          cellElement.textContent = row[column.name];
+          rowElement.appendChild(cellElement);
+        });
+        rowHeadersElement.appendChild(rowElement);
+      });
+      
+      // Populate column headers
+      selectedTable.columns.forEach((column) => {
+        const columnHeaderElement = document.createElement("th");
+        columnHeaderElement.textContent = column.name;
+        columnHeadersElement.appendChild(columnHeaderElement);
+      });
+      
+      // Select form element and add input fields for each column
+      const formElement = document.getElementById("table-new-record");
+
+      const columnHeadersNewElement = document.getElementById("column-new-headers");
+      const rowHeadersNewElement = document.getElementById("column-new-rows");
+      //const columnHeaderElement_1 = document.createElement("thead");
+      const columnHeaderElement_2 = document.createElement("tr");
+      
+
+      const rowElement = document.createElement("tr");
+
+      //formElement.innerHTML = "";
+      selectedTable.columns.forEach((column) => {
+        elementForm = document.createElement("form");
+        elementForm.id = "addingNewRecordForm";
+        document.body.appendChild(elementForm);
+        const columnHeaderElement = document.createElement("th");
+        //const formGroupElement = document.createElement("div");
+        //formGroupElement.classList.add("form-group");
+
+        //const labelElement = document.createElement("label");
+        //labelElement.setAttribute("for", column.name);
+        columnHeaderElement.textContent = column.name;
+
+        const inputElement = document.createElement("input");
+        inputElement.setAttribute("type", "text");
+        inputElement.setAttribute("id", column.name);
+        inputElement.setAttribute("name", column.name);
+        inputElement.form = elementForm.id ;
+        inputElement.setAttribute('inputElement',  elementForm.id);
+        inputElement.classList.add("form-control");
+
+        
+        const cellElement = document.createElement("td");
+        cellElement.appendChild(inputElement);
+
+        rowElement.appendChild(cellElement);
+        //rowElement.appendChild(elementForm);
+        //columnHeaderElement.appendChild(labelElement);
+        columnHeaderElement_2.appendChild(columnHeaderElement);
+
+       
+        //formElement.appendChild(formGroupElement);
+      });
+      columnHeaderElement = document.createElement("th");
+      columnHeaderElement.textContent = "Action";
+      columnHeaderElement_2.appendChild(columnHeaderElement);
+
+
+      
+      // Add submit button to form
+      const submitButton = document.createElement("button");
+      submitButton.setAttribute("type", "button");
+      submitButton.classList.add("btn", "btn-primary");
+      submitButton.textContent = "Add Row";
+      submitButton.setAttribute('form',  "addingNewRecordForm");
+      submitButton.addEventListener("click", () => {
+        const newRow = {};
+        selectedTable.columns.forEach((column) => {
+          const inputElement = document.getElementById(column.name);
+          newRow[column.name] = inputElement.value;
+          inputElement.value = "";
+        });
+        selectedTable.rows.push(newRow);
+        console.log("NewJSON -> " + JSON.stringify(myTables)) ;
+        
+        //localStorage.setItem("myTables", JSON.stringify(myTables));
+        //tableDropdown.dispatchEvent(new Event("change"));
+      });
+
+      cellElement = document.createElement("td");
+      cellElement.appendChild(submitButton);
+      rowElement.appendChild(cellElement);
+      //rowElement.appendChild(elementForm);
+
+
+      rowHeadersNewElement.appendChild(rowElement);
+      //columnHeaderElement_1.appendChild(columnHeaderElement_2);
+      columnHeadersNewElement.appendChild(columnHeaderElement_2);
+
+      //formElement.appendChild(submitButton);
+    });
+
+  }
+  
